@@ -21,6 +21,7 @@ from myagent.environment import detect, which_python_alias
 from myagent.events import EventLogger, list_sessions, new_session_path, read_events
 from myagent.model import FakeModel, OpenAICompatibleModel
 from myagent.prompts import build_instance_prompt, build_system_prompt
+from myagent.tools.edit import EditFileTool
 from myagent.tools.files import ListDirTool, ReadFileTool, WriteFileTool
 from myagent.tools.registry import ToolRegistry
 from myagent.tools.shell import PythonTool, ShellTool
@@ -65,6 +66,7 @@ def _build_tools(gate=None) -> ToolRegistry:
             ShellTool(),
             ReadFileTool(),
             WriteFileTool(),
+            EditFileTool(),
             ListDirTool(),
             SubmitTool(),
         ],

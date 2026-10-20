@@ -1,0 +1,15 @@
+{
+  "file_lines": 2406,
+  "file_bytes": 42286,
+  "edit_file": {
+    "chars_written": 11,
+    "lines_changed": 1,
+    "occurrences": 1
+  },
+  "write_file": {
+    "chars_written": 42297,
+    "lines_changed": 2406
+  },
+  "ratio": 3845.2,
+  "content_equal": true
+}
