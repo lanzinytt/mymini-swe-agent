@@ -21,6 +21,7 @@ from myagent.environment import detect, which_python_alias
 from myagent.events import EventLogger, list_sessions, new_session_path, read_events
 from myagent.model import FakeModel, OpenAICompatibleModel
 from myagent.prompts import build_instance_prompt, build_system_prompt
+from myagent.safety import SafetyGate
 from myagent.tools.edit import EditFileTool
 from myagent.tools.files import ListDirTool, ReadFileTool, WriteFileTool
 from myagent.tools.registry import ToolRegistry
@@ -72,7 +73,6 @@ def _build_tools(gate=None) -> ToolRegistry:
         ],
         gate=gate,
     )
-
 
 # ---------------------------------------------------------------------- doctor
 @app.command()
@@ -148,7 +148,8 @@ def run(
     cfg = _load_config(_find_env_file(env_file))
     ws = workspace.resolve()
     ws.mkdir(parents=True, exist_ok=True)
-    tools = _build_tools()
+    gate = SafetyGate() if cfg.safety else None
+    tools = _build_tools(gate)
     env = detect(ws)
     system = build_system_prompt(env, tools.names())
     instance = build_instance_prompt(
@@ -178,6 +179,11 @@ def run(
             max_cost=cfg.max_cost,
             max_seconds=cfg.max_seconds,
             timeout=cfg.tool_timeout,
+            context_limit=cfg.context_limit,
+            compact_keep_recent=cfg.compact_keep_recent,
+            compact_strategy=cfg.compact_strategy,
+            stall_reminder_after=cfg.stall_reminder_after,
+            safety=cfg.safety,
             logger=logger,
         )
         result = agent.run()

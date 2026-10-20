@@ -1,0 +1,12 @@
+{
+  "dangerous": 20,
+  "dangerous_blocked": 20,
+  "block_rate_pct": 100.0,
+  "handwritten_benign": 6,
+  "handwritten_false_positives": 0,
+  "trajectories": 3,
+  "real_tool_calls": 48,
+  "real_false_positives": 0,
+  "false_positive_rate_pct": 0.0,
+  "false_positive_samples": []
+}
