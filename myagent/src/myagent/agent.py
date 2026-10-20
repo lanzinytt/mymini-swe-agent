@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from myagent.context import estimate_context_tokens, maybe_compact
 from myagent.model import Model, ToolCall
 from myagent.tools.base import ToolContext
 from myagent.tools.registry import ToolRegistry
@@ -191,6 +192,7 @@ class Agent:
     # ------------------------------------------------------------------ 一步
     def step(self) -> None:
         self.steps += 1
+        self._compact_if_needed()
         completion = self.model.chat(self.messages, self.tools.schemas())
         self.cost += completion.cost
         for k, v in completion.usage.items():
@@ -280,6 +282,25 @@ class Agent:
     @staticmethod
     def _tool_message(call: ToolCall, text: str) -> dict:
         return {"role": "tool", "tool_call_id": call.id, "name": call.name, "content": text}
+
+    # ------------------------------------------------------------------ 压缩
+    def _compact_if_needed(self) -> None:
+        """在每次请求之前检查预算。放在 step 开头而不是事后，是为了让
+        ``model_response`` 事件里记录的 usage 与真正发出去的 payload 一致。
+        """
+        if self.context_limit <= 0:
+            return
+        new_messages, info = maybe_compact(
+            self.messages,
+            limit=self.context_limit,
+            keep_recent=self.compact_keep_recent,
+            strategy=self.compact_strategy,
+        )
+        if info is None:
+            return
+        self.messages = new_messages
+        self.compactions.append(info.as_dict())
+        self._log("compaction", step=self.steps, **info.as_dict())
 
     # ------------------------------------------------------------------ 日志
     def _log(self, kind: str, **payload) -> None:

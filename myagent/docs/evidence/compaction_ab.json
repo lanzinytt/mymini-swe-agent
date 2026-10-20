@@ -1,0 +1,242 @@
+{
+  "static": [
+    {
+      "strategy": "none",
+      "tokens": 2413,
+      "kept_messages": 42,
+      "saved_pct": 0.0
+    },
+    {
+      "strategy": "truncate",
+      "tokens": 493,
+      "kept_messages": 10,
+      "saved_pct": 79.6
+    },
+    {
+      "strategy": "summarize",
+      "tokens": 1091,
+      "kept_messages": 11,
+      "saved_pct": 54.8
+    }
+  ],
+  "runs": [
+    {
+      "limit": 120000,
+      "strategy": "none",
+      "exit_status": "Submitted",
+      "steps": 14,
+      "files_written": 6,
+      "task_complete": true,
+      "n_compactions": 0,
+      "tokens_saved_pct": 0.0,
+      "peak_prompt_chars": 48827,
+      "compactions": []
+    },
+    {
+      "limit": 120000,
+      "strategy": "truncate",
+      "exit_status": "Submitted",
+      "steps": 14,
+      "files_written": 6,
+      "task_complete": true,
+      "n_compactions": 0,
+      "tokens_saved_pct": 0.0,
+      "peak_prompt_chars": 48827,
+      "compactions": []
+    },
+    {
+      "limit": 120000,
+      "strategy": "summarize",
+      "exit_status": "Submitted",
+      "steps": 14,
+      "files_written": 6,
+      "task_complete": true,
+      "n_compactions": 0,
+      "tokens_saved_pct": 0.0,
+      "peak_prompt_chars": 48827,
+      "compactions": []
+    },
+    {
+      "limit": 6000,
+      "strategy": "none",
+      "exit_status": "Submitted",
+      "steps": 14,
+      "files_written": 6,
+      "task_complete": true,
+      "n_compactions": 0,
+      "tokens_saved_pct": 0.0,
+      "peak_prompt_chars": 48827,
+      "compactions": []
+    },
+    {
+      "limit": 6000,
+      "strategy": "truncate",
+      "exit_status": "Submitted",
+      "steps": 14,
+      "files_written": 6,
+      "task_complete": true,
+      "n_compactions": 9,
+      "tokens_saved_pct": 25.4,
+      "peak_prompt_chars": 32270,
+      "compactions": [
+        {
+          "strategy": "truncate",
+          "tokens_before": 15180,
+          "tokens_after": 12146,
+          "dropped_messages": 2,
+          "used_summary": false,
+          "saved_pct": 20.0
+        },
+        {
+          "strategy": "truncate",
+          "tokens_before": 15180,
+          "tokens_after": 12146,
+          "dropped_messages": 2,
+          "used_summary": false,
+          "saved_pct": 20.0
+        },
+        {
+          "strategy": "truncate",
+          "tokens_before": 14185,
+          "tokens_after": 11151,
+          "dropped_messages": 2,
+          "used_summary": false,
+          "saved_pct": 21.4
+        },
+        {
+          "strategy": "truncate",
+          "tokens_before": 13190,
+          "tokens_after": 10156,
+          "dropped_messages": 2,
+          "used_summary": false,
+          "saved_pct": 23.0
+        },
+        {
+          "strategy": "truncate",
+          "tokens_before": 12195,
+          "tokens_after": 9161,
+          "dropped_messages": 2,
+          "used_summary": false,
+          "saved_pct": 24.9
+        },
+        {
+          "strategy": "truncate",
+          "tokens_before": 11200,
+          "tokens_after": 8166,
+          "dropped_messages": 2,
+          "used_summary": false,
+          "saved_pct": 27.1
+        },
+        {
+          "strategy": "truncate",
+          "tokens_before": 10205,
+          "tokens_after": 8166,
+          "dropped_messages": 2,
+          "used_summary": false,
+          "saved_pct": 20.0
+        },
+        {
+          "strategy": "truncate",
+          "tokens_before": 10265,
+          "tokens_after": 6187,
+          "dropped_messages": 4,
+          "used_summary": false,
+          "saved_pct": 39.7
+        },
+        {
+          "strategy": "truncate",
+          "tokens_before": 6220,
+          "tokens_after": 4181,
+          "dropped_messages": 2,
+          "used_summary": false,
+          "saved_pct": 32.8
+        }
+      ]
+    },
+    {
+      "limit": 6000,
+      "strategy": "summarize",
+      "exit_status": "Submitted",
+      "steps": 14,
+      "files_written": 6,
+      "task_complete": true,
+      "n_compactions": 9,
+      "tokens_saved_pct": 25.2,
+      "peak_prompt_chars": 32553,
+      "compactions": [
+        {
+          "strategy": "summarize",
+          "tokens_before": 15180,
+          "tokens_after": 12191,
+          "dropped_messages": 2,
+          "used_summary": true,
+          "saved_pct": 19.7
+        },
+        {
+          "strategy": "summarize",
+          "tokens_before": 15225,
+          "tokens_after": 12218,
+          "dropped_messages": 3,
+          "used_summary": true,
+          "saved_pct": 19.8
+        },
+        {
+          "strategy": "summarize",
+          "tokens_before": 14257,
+          "tokens_after": 11223,
+          "dropped_messages": 3,
+          "used_summary": true,
+          "saved_pct": 21.3
+        },
+        {
+          "strategy": "summarize",
+          "tokens_before": 13262,
+          "tokens_after": 10228,
+          "dropped_messages": 3,
+          "used_summary": true,
+          "saved_pct": 22.9
+        },
+        {
+          "strategy": "summarize",
+          "tokens_before": 12267,
+          "tokens_after": 9233,
+          "dropped_messages": 3,
+          "used_summary": true,
+          "saved_pct": 24.7
+        },
+        {
+          "strategy": "summarize",
+          "tokens_before": 11272,
+          "tokens_after": 8238,
+          "dropped_messages": 3,
+          "used_summary": true,
+          "saved_pct": 26.9
+        },
+        {
+          "strategy": "summarize",
+          "tokens_before": 10277,
+          "tokens_after": 8240,
+          "dropped_messages": 3,
+          "used_summary": true,
+          "saved_pct": 19.8
+        },
+        {
+          "strategy": "summarize",
+          "tokens_before": 10339,
+          "tokens_after": 6300,
+          "dropped_messages": 5,
+          "used_summary": true,
+          "saved_pct": 39.1
+        },
+        {
+          "strategy": "summarize",
+          "tokens_before": 6333,
+          "tokens_after": 4255,
+          "dropped_messages": 3,
+          "used_summary": true,
+          "saved_pct": 32.8
+        }
+      ]
+    }
+  ]
+}
