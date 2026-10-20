@@ -8,6 +8,7 @@ There are three modes:
 
 import re
 import sys
+import time
 from typing import Literal, NoReturn
 
 from rich.console import Console
@@ -56,12 +57,14 @@ class InteractiveAgent(DefaultAgent):
         return super().add_messages(*messages)
 
     def query(self) -> dict:
-        # Extend supermethod to handle human mode
         if self.config.mode == "human":
+            # A user command is a real action, so it consumes budget like an LM call.
+            self._check_limits()
             match command := self._prompt_and_handle_slash_commands("[bold yellow]>[/bold yellow] "):
                 case "/y" | "/c":
                     pass
                 case _:
+                    self.n_calls += 1
                     msg = {
                         "role": "user",
                         "content": f"User command: \n```bash\n{command}\n```",
@@ -91,7 +94,21 @@ class InteractiveAgent(DefaultAgent):
             )
             self.config.step_limit = int(input("New step limit: "))
             self.config.cost_limit = float(input("New cost limit: "))
+            # Limit was raised: resume whatever this agent was doing. Going through
+            # self.query() would re-enter the human branch and consume another user
+            # turn, so delegate to the parent implementation.
             return super().query()
+
+    def _check_limits(self) -> None:
+        """Raise if the step/cost/wall-clock budget is exhausted."""
+        if 0 < self.config.step_limit <= self.n_calls or 0 < self.config.cost_limit <= self.cost:
+            raise LimitsExceeded(
+                {"role": "exit", "content": "LimitsExceeded", "extra": {"exit_status": "LimitsExceeded", "submission": ""}}
+            )
+        if 0 < self.config.wall_time_limit_seconds <= int(time.time() - self._start_time):
+            raise TimeExceeded(
+                {"role": "exit", "content": "TimeExceeded", "extra": {"exit_status": "TimeExceeded", "submission": ""}}
+            )
 
     @staticmethod
     def _stdin_is_interactive() -> bool:

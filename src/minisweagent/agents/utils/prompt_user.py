@@ -5,8 +5,29 @@ from prompt_toolkit.shortcuts import PromptSession
 from minisweagent import global_config_dir
 
 _history = FileHistory(global_config_dir / "interactive_history.txt")
-prompt_session = PromptSession(history=_history)
-_multiline_prompt_session = PromptSession(history=_history, multiline=True)
+
+
+class _LazyPromptSession:
+    """Build the real ``PromptSession`` on first use.
+
+    Constructing a ``PromptSession`` touches the terminal immediately and raises
+    ``NoConsoleScreenBufferError`` when stdout is a pipe (a subprocess, CI, a
+    sandbox). Importing the interactive agent must not depend on a terminal
+    being attached, otherwise even non-interactive runs cannot be imported.
+    """
+
+    def __init__(self, **kwargs):
+        self._kwargs = kwargs
+        self._session: PromptSession | None = None
+
+    def prompt(self, *args, **kwargs):
+        if self._session is None:
+            self._session = PromptSession(**self._kwargs)
+        return self._session.prompt(*args, **kwargs)
+
+
+prompt_session = _LazyPromptSession(history=_history)
+_multiline_prompt_session = _LazyPromptSession(history=_history, multiline=True)
 
 
 def _multiline_prompt() -> str:
