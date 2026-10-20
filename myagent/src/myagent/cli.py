@@ -12,6 +12,7 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 
 from myagent.agent import Agent
@@ -211,7 +212,9 @@ def trace(
     width = 400 if full else 90
     for n, e in enumerate(events, 1):
         kind = e.get("kind", "?")
-        console.print(f"[dim]{n:>4}[/dim] [cyan]{kind:<14}[/cyan] {_trace_detail(e, width)}")
+        console.print(
+            f"[dim]{n:>4}[/dim] [cyan]{kind:<14}[/cyan] {escape(_trace_detail(e, width))}"
+        )
 
 
 def _trace_detail(e: dict, width: int) -> str:
