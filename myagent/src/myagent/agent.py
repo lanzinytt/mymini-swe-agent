@@ -31,6 +31,10 @@ MAX_SECONDS = "MaxSeconds"
 FINAL_ANSWER = "FinalAnswer"
 MODEL_ERROR = "ModelError"
 
+# 会改变 workspace 的工具。其余都是"看"——连续很多步只看不写，通常意味着模型
+# 在打磨而不是收尾（Quest 02 中它反复渲染预览图就是这个形状）。
+MUTATING_TOOLS = {"write_file", "edit_file", "submit"}
+
 
 @dataclass
 class RunResult:
@@ -212,6 +216,7 @@ class Agent:
         self._execute_all(completion.tool_calls)
 
     def _execute_all(self, calls: list[ToolCall]) -> None:
+        mutated = False
         for call in calls:
             self._log("tool_call", step=self.steps, id=call.id, name=call.name,
                       raw_args=call.raw_args[:2000])
@@ -225,6 +230,7 @@ class Agent:
                 continue
 
             result = self.tools.execute(call.name, call.raw_args, self.ctx)
+            mutated = mutated or call.name in MUTATING_TOOLS
             text = result.as_observation()
             self.messages.append(self._tool_message(call, text))
             self._log(
@@ -238,6 +244,38 @@ class Agent:
                 truncated=result.truncated,
                 skipped=False,
             )
+        self._track_stall(mutated)
+
+    def _track_stall(self, mutated: bool) -> None:
+        """收敛提醒：连续 N 步没有写文件时，提醒**一次**。
+
+        只提醒一次，否则模型会在"被催"和"继续打磨"之间来回。提醒用
+        role=user 而不是 role=system：append-only 的历史里中途插 system 会破坏
+        前缀缓存，且部分网关直接报错。
+        """
+        if self.stall_reminder_after <= 0 or self.ctx.submitted:
+            return
+        if mutated:
+            # 写了文件 = 新的尝试开始，计数与"本轮是否已提醒"都要重置
+            self._idle_steps = 0
+            self._reminded = False
+            return
+        self._idle_steps += 1
+        if self._idle_steps >= self.stall_reminder_after and not self._reminded:
+            self._reminded = True
+            self.stalls += 1
+            self.messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        f"[harness] {self._idle_steps} steps without writing any file. "
+                        "The checker already passed, so further inspection adds no value. "
+                        "Call submit now with a one-sentence summary. "
+                        "If you still need changes, make them with a single edit and then submit."
+                    ),
+                }
+            )
+            self._log("stall_nudge", step=self.steps, idle_steps=self._idle_steps)
 
     @staticmethod
     def _tool_message(call: ToolCall, text: str) -> dict:
