@@ -22,6 +22,7 @@ from myagent.events import EventLogger, list_sessions, new_session_path, read_ev
 from myagent.model import FakeModel, OpenAICompatibleModel
 from myagent.prompts import build_instance_prompt, build_system_prompt
 from myagent.safety import SafetyGate
+from myagent.session import restore, write_resume_marker
 from myagent.tools.edit import EditFileTool
 from myagent.tools.files import ListDirTool, ReadFileTool, WriteFileTool
 from myagent.tools.registry import ToolRegistry
@@ -258,6 +259,87 @@ def sessions(workspace: Path = typer.Option(Path("."), "--workspace", "-w")) -> 
     """列出该 workspace 下的轨迹文件。"""
     for p in list_sessions(workspace):
         console.print(f"{p}  [dim]{p.stat().st_size} bytes[/dim]")
+
+
+# ---------------------------------------------------------------------- resume
+@app.command()
+def resume(
+    session: Path = typer.Argument(None, help="省略时取最新一条轨迹。"),
+    workspace: Path = typer.Option(Path("."), "--workspace", "-w"),
+    max_steps: int = typer.Option(0, "--max-steps", help="0 表示用 .env 默认值。"),
+    env_file: Path = typer.Option(None, "--env-file"),
+) -> None:
+    """从轨迹继续跑。**追加**写原文件，不新建会话。"""
+    _safe_console()
+    ws = workspace.resolve()
+    if session is None:
+        found = list_sessions(ws)
+        if not found:
+            console.print(f"[red]no session under {ws}[/red]")
+            raise typer.Exit(1)
+        session = found[-1]
+    if not session.is_file():
+        console.print(f"[red]no such session: {session}[/red]")
+        raise typer.Exit(1)
+
+    state = restore(session)
+    cfg = _load_config(_find_env_file(env_file))
+    missing = cfg.problems()
+    if missing:
+        console.print(f"[red]missing config: {', '.join(missing)}[/red]")
+        raise typer.Exit(2)
+
+    console.print(
+        Panel(
+            f"session      {session}\n"
+            f"events       {state.event_count}\n"
+            f"steps        {state.steps}\n"
+            f"messages     {len(state.messages)}\n"
+            f"note         {state.trailing_note or '-'}",
+            title="resume",
+            expand=False,
+        )
+    )
+
+    gate = SafetyGate() if cfg.safety else None
+    tools = _build_tools(gate)
+    model = OpenAICompatibleModel(
+        model=cfg.model, base_url=cfg.base_url, api_key=cfg.api_key, price=cfg.price
+    )
+    with EventLogger(session, append=True) as logger:
+        logger.log("resume", from_events=state.event_count, from_steps=state.steps)
+        agent = Agent(
+            model,
+            tools,
+            system_prompt=state.messages[0]["content"] if state.messages else "",
+            instance_prompt=state.messages[1]["content"] if len(state.messages) > 1 else "",
+            workspace=ws,
+            max_steps=max_steps or cfg.max_steps,
+            max_cost=cfg.max_cost,
+            max_seconds=cfg.max_seconds,
+            timeout=cfg.tool_timeout,
+            context_limit=cfg.context_limit,
+            compact_keep_recent=cfg.compact_keep_recent,
+            compact_strategy=cfg.compact_strategy,
+            stall_reminder_after=cfg.stall_reminder_after,
+            safety=cfg.safety,
+            logger=logger,
+            messages=state.messages,
+        )
+        # 计费从上次的累计值接着算，否则 cost_limit 会被"重置"
+        agent.cost = state.cost
+        agent.usage = state.usage
+        result = agent.run()
+
+    console.print(
+        Panel(
+            f"exit_status  {result.exit_status}\nsteps        {result.steps}\n"
+            f"cost         ${result.cost:.5f}\nsubmission   {result.submission or '-'}",
+            title="resume finished",
+            expand=False,
+        )
+    )
+    typer.echo(json.dumps({"result": result.as_dict(), "session": str(session)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":  # pragma: no cover

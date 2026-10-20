@@ -130,8 +130,17 @@ class Agent:
 
     def run(self) -> RunResult:
         self._prepare_history()
-        self._log("run_start", workspace=str(self.workspace), model=getattr(self.model, "name", "?"),
-                  tools=self.tools.names(), max_steps=self.max_steps)
+        self._log(
+            "run_start",
+            workspace=str(self.workspace),
+            model=getattr(self.model, "name", "?"),
+            tools=self.tools.names(),
+            max_steps=self.max_steps,
+            # 保存提示词，resume 才能重建出一模一样的历史。
+            # 不存的话恢复出来的 system 消息是空的，模型会立刻跑偏。
+            system=self.system_prompt,
+            instance=self.instance_prompt,
+        )
         status = ""
         try:
             while True:
@@ -266,18 +275,14 @@ class Agent:
         if self._idle_steps >= self.stall_reminder_after and not self._reminded:
             self._reminded = True
             self.stalls += 1
-            self.messages.append(
-                {
-                    "role": "user",
-                    "content": (
-                        f"[harness] {self._idle_steps} steps without writing any file. "
-                        "The checker already passed, so further inspection adds no value. "
-                        "Call submit now with a one-sentence summary. "
-                        "If you still need changes, make them with a single edit and then submit."
-                    ),
-                }
+            text = (
+                f"[harness] {self._idle_steps} steps without writing any file. "
+                "The checker already passed, so further inspection adds no value. "
+                "Call submit now with a one-sentence summary. "
+                "If you still need changes, make them with a single edit and then submit."
             )
-            self._log("stall_nudge", step=self.steps, idle_steps=self._idle_steps)
+            self.messages.append({"role": "user", "content": text})
+            self._log("stall_nudge", step=self.steps, idle_steps=self._idle_steps, content=text)
 
     @staticmethod
     def _tool_message(call: ToolCall, text: str) -> dict:
