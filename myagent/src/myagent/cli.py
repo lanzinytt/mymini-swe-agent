@@ -75,6 +75,20 @@ def _build_tools(gate=None) -> ToolRegistry:
         gate=gate,
     )
 
+
+def _read_project_instructions(ws: Path, limit: int = 4000) -> str:
+    """读工作区根目录的 AGENTS.md 并注入系统提示。
+
+    环境事实（解释器路径、数据位置、禁止的命令）写在项目里，比反复
+    在任务描述里手写更可靠：换一个任务就不用重写一遍。
+    """
+    for name in ("AGENTS.md", "agents.md"):
+        path = ws / name
+        if path.is_file():
+            text = path.read_text(encoding="utf-8", errors="replace").strip()
+            return text[:limit]
+    return ""
+
 # ---------------------------------------------------------------------- doctor
 @app.command()
 def doctor(
@@ -152,7 +166,7 @@ def run(
     gate = SafetyGate() if cfg.safety else None
     tools = _build_tools(gate)
     env = detect(ws)
-    system = build_system_prompt(env, tools.names())
+    system = build_system_prompt(env, tools.names(), _read_project_instructions(ws))
     instance = build_instance_prompt(
         task, deliverable or "Satisfy the task. Verify before you submit."
     )

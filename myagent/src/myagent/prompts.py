@@ -38,9 +38,17 @@ INSTANCE = """# Task
 {deliverable}
 """
 
+PROJECT = """
+# Project instructions (AGENTS.md)
+{instructions}
+"""
 
-def build_system_prompt(env: Environment, tools: list[str]) -> str:
-    return SYSTEM.format(tools=", ".join(tools), **env.as_dict())
+
+def build_system_prompt(env: Environment, tools: list[str], instructions: str = "") -> str:
+    prompt = SYSTEM.format(tools=", ".join(tools), **env.as_dict())
+    if instructions.strip():
+        prompt += PROJECT.format(instructions=instructions.strip())
+    return prompt
 
 
 def build_instance_prompt(task: str, deliverable: str) -> str:
